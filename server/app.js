@@ -9,9 +9,9 @@ const app = express() ;
 // a middleware that binds incoming data with the req.body object 
 app.use(express.json());
 
-
 mongoose.connect(process.env.MONGODB_URI)
 .then(() => console.log(" MongoDb connection has been established !"))
+
 // wriing the best readable format of connection error 
 .catch(err => {
     console.error("❌ MongoDB Connection Failed");
@@ -35,6 +35,11 @@ mongoose.connect(process.env.MONGODB_URI)
 app.use('/api/users', require('./routes/userRoutes') );
 
 
+app.use('/api/auth', require('./routes/auth') );
+// app.use('/api/issues', require('./routes/issues') );
+// app.use('/api/stats', require('./routes/stats') );
+
+
 
 // only for testing the environment variables 
 // const script = "checking Environmet Variables " ;
@@ -42,10 +47,10 @@ app.use('/api/users', require('./routes/userRoutes') );
 // console.log(script , process.env.PORT) ;
 
 
-app.get('/' , (req,res)=> {
-    res.send('Listening on the route "/" ') ;
-})
+// app.get('/' , (req,res)=> {
+//     res.send('Listening on the route "/" ') ;
+// })
 
-app.listen( port , () => {
+app.listen( process.env.PORT || port , () => {
  console.log("Server is listening" ) ;
 })
