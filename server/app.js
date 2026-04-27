@@ -36,7 +36,7 @@ app.use('/api/users', require('./routes/userRoutes') );
 
 
 app.use('/api/auth', require('./routes/auth') );
-// app.use('/api/issues', require('./routes/issues') );
+app.use('/api/issues', require('./routes/issues') );
 // app.use('/api/stats', require('./routes/stats') );
 
 
