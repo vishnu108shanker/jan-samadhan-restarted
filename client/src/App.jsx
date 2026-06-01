@@ -39,7 +39,7 @@ export default function App() {
           element={
             user
               ? <Navigate to={user.role === 'admin' ? '/admin' : '/report'} replace />
-              : <Navigate to="/login" replace />
+              : <Navigate to="/scores" replace />
           }
         />
 
@@ -50,6 +50,7 @@ export default function App() {
         {/* Public tracker — no auth needed */}
         <Route path="/track" element={<TrackStatus />} />
         <Route path="/scores" element={<PublicScores />} />
+        <Route path="/public" element={<Navigate to="/scores" replace />} />
 
         {/* Citizen-protected pages */}
         <Route

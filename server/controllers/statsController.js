@@ -9,6 +9,8 @@ exports.getStats = async (req, res) => {
             }))
         );
 
+        stats.sort((a, b) => b.score - a.score);
+
         res.json({ success: true, stats });
     } catch (error) {
         console.error("Error fetching stats:", error.message);
