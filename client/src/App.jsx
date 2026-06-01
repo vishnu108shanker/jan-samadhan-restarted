@@ -7,6 +7,7 @@ import ReportIssue from './pages/ReportIssue';
 import TrackStatus from './pages/TrackStatus';
 import Dashboard   from './pages/DashBoard';
 import AdminPanel  from './pages/AdminPanel';
+import PublicScores from './pages/PublicScores';
 
 // ─── Guards ──────────────────────────────────────────────────────────────────
 
@@ -48,6 +49,7 @@ export default function App() {
 
         {/* Public tracker — no auth needed */}
         <Route path="/track" element={<TrackStatus />} />
+        <Route path="/scores" element={<PublicScores />} />
 
         {/* Citizen-protected pages */}
         <Route

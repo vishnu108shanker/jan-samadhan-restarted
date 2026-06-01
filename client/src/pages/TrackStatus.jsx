@@ -62,6 +62,7 @@ export default function TrackStatus() {
           <span className="font-bold text-gray-800">Jan Samadhan</span>
         </div>
         <div className="flex items-center gap-4">
+          <Link to="/scores" className="text-sm text-gray-500 hover:text-orange-500 transition">Public Scores</Link>
           {user ? (
             <>
               <Link to="/report" className="text-sm text-gray-500 hover:text-orange-500 transition">Report Issue</Link>

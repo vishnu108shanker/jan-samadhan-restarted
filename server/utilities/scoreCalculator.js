@@ -1,6 +1,9 @@
-const Issue = require('../models/Issues') ;
+const Issue = require('../models/Issues');
 
-exports.getScore = async (department) =>{
+const DEPARTMENTS = ['Roads', 'Water', 'Sanitation', 'Electricity', 'Health', 'Education'];
+exports.DEPARTMENTS = DEPARTMENTS;
+
+exports.getScore = async (department) => {
   const total    = await Issue.countDocuments({ department });
   const resolved = await Issue.countDocuments({ department, status: 'Resolved' });
 

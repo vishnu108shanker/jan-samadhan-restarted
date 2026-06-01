@@ -1,8 +1,9 @@
 const express =  require('express') ;
 const router = express.Router()  ;
 
-const statsController = require('../controllers/statsController').getStats ;
+const statsController = require('../controllers/statsController').getStats;
 
-router.get('/stats', statsController) ;
+router.get('/', statsController);
+router.get('/stats', statsController); // backwards-compatible alias
 
 module.exports = router ;

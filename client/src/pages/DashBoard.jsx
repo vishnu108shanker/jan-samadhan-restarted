@@ -51,6 +51,7 @@ export default function Dashboard() {
           <span className="font-bold text-gray-800">Jan Samadhan</span>
         </div>
         <div className="flex items-center gap-4">
+          <Link to="/scores" className="text-sm text-gray-500 hover:text-orange-500 transition">Public Scores</Link>
           <Link to="/report" className="text-sm text-gray-500 hover:text-orange-500 transition">Report Issue</Link>
           <Link to="/track" className="text-sm text-gray-500 hover:text-orange-500 transition">Track Issue</Link>
           {user?.role === 'admin' && <Link to="/admin" className="text-sm text-orange-600 font-medium hover:underline">Admin Panel</Link>}

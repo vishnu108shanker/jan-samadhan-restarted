@@ -179,6 +179,12 @@ export default function Register() {
               Login here
             </Link>
           </p>
+          <p className="text-center text-sm text-gray-500 mt-3">
+            Curious how departments rank?{' '}
+            <Link to="/scores" className="text-orange-500 font-medium hover:underline">
+              View public credibility scores
+            </Link>
+          </p>
         </div>
 
         {/* Footer note */}

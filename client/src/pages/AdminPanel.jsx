@@ -97,6 +97,7 @@ export default function AdminPanel() {
           </div>
         </div>
         <div className="flex items-center gap-4">
+          <Link to="/scores" className="text-sm text-gray-500 hover:text-orange-500 transition">Public Scores</Link>
           <Link to="/track" className="text-sm text-gray-500 hover:text-orange-500 transition">Public Tracker</Link>
           <button onClick={() => { logout(); navigate('/login'); }} className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg transition">Logout</button>
         </div>

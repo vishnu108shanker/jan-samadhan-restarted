@@ -157,6 +157,12 @@ export default function Login() {
               Register here
             </Link>
           </p>
+          <p className="text-center text-sm text-gray-500 mt-3">
+            Want to see how departments are performing?{' '}
+            <Link to="/scores" className="text-orange-500 font-medium hover:underline">
+              View public credibility scores
+            </Link>
+          </p>
         </div>
 
         {/* Footer note */}

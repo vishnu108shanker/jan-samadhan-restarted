@@ -1,14 +1,13 @@
-const getScore = require('../utilities/scoreCalculator').getScore ;
-const Issue = require('../models/Issues') ;
+const { getScore, DEPARTMENTS } = require('../utilities/scoreCalculator');
 
 exports.getStats = async (req, res) => {
     try {
-        const departments = ["Water", "Electricity", "Roads", "Sanitation", "Healthcare"];
-        const stats = [];
-        for (const dept of departments) {
-            const score = await getScore(dept);
-            stats.push({ department: dept, score });
-        }
+        const stats = await Promise.all(
+            DEPARTMENTS.map(async (department) => ({
+                department,
+                score: await getScore(department),
+            }))
+        );
 
         res.json({ success: true, stats });
     } catch (error) {
