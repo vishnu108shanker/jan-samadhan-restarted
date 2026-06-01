@@ -54,6 +54,17 @@ exports.getAllIssues = async (req, res) => {
   }
 }
 
+// # Function to Get issues filed by the logged-in citizen (JWT required)
+exports.getMyIssues = async (req, res) => {
+  try {
+    const issues = await Issue.find({ citizenId: req.user.userId }).sort({ createdAt: -1 });
+    res.json({ success: true, issues });
+  } catch (error) {
+    console.error("Error fetching citizen issues:", error.message);
+    res.status(500).json({ error: "Internal server error", details: error.message });
+  }
+}
+
 
 // #Function to Track issue by token (public, no auth needed)
 exports.trackIssueByToken =  async (req, res) => {
