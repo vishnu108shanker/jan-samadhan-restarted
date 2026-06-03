@@ -1,24 +1,30 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 
-import Login       from './pages/Login';
-import Register    from './pages/Register';
-import ReportIssue from './pages/ReportIssue';
-import TrackStatus from './pages/TrackStatus';
-import Dashboard   from './pages/DashBoard';
-import AdminPanel  from './pages/AdminPanel';
-import PublicScores from './pages/PublicScores';
+import Home          from './pages/Home';
+import Login         from './pages/Login';
+import Register      from './pages/Register';
+import ReportIssue   from './pages/ReportIssue';
+import TrackStatus   from './pages/TrackStatus';
+import MyDashboard   from './pages/MyDashboard';
+import AdminPanel    from './pages/AdminPanel';
+import PublicScores  from './pages/PublicScores';
+import ReportSuccess from './pages/ReportSuccess';
+import NotFound      from './pages/NotFound';
 
-// ─── Guards ──────────────────────────────────────────────────────────────────
+import { CitizenLayout, AdminLayout } from './components/Layouts';
 
-/** Redirect to /login if not authenticated */
+// ── Route Guards ─────────────────────────────────────────────────────────────
+
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) {
+    const path = window.location.pathname + window.location.search;
+    return <Navigate to={`/login?redirect=${encodeURIComponent(path)}`} replace />;
+  }
   return children;
 }
 
-/** Redirect to /report if authenticated but not admin */
 function AdminRoute({ children }) {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
@@ -26,50 +32,47 @@ function AdminRoute({ children }) {
   return children;
 }
 
-// ─── App ─────────────────────────────────────────────────────────────────────
+// ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
-  const { user } = useAuth();
-
   return (
     <BrowserRouter>
       <Routes>
-        {/* Root → redirect based on auth state */}
+
+        {/* Admin — deep navy layout */}
         <Route
-          path="/"
+          path="/admin"
           element={
-            user
-              ? <Navigate to={user.role === 'admin' ? '/admin' : '/report'} replace />
-              : <Navigate to="/scores" replace />
+            <AdminRoute>
+              <AdminLayout>
+                <AdminPanel />
+              </AdminLayout>
+            </AdminRoute>
           }
         />
 
-        {/* Public auth pages */}
-        <Route path="/login"    element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        {/* Public + Citizen — standard layout */}
+        <Route element={<CitizenLayout />}>
+          <Route path="/"          element={<Home />} />
+          <Route path="/scores"    element={<PublicScores />} />
+          <Route path="/track"     element={<TrackStatus />} />
+          <Route path="/login"     element={<Login />} />
+          <Route path="/register"  element={<Register />} />
 
-        {/* Public tracker — no auth needed */}
-        <Route path="/track" element={<TrackStatus />} />
-        <Route path="/scores" element={<PublicScores />} />
-        <Route path="/public" element={<Navigate to="/scores" replace />} />
+          {/* Protected */}
+          <Route path="/report"
+            element={<ProtectedRoute><ReportIssue /></ProtectedRoute>}
+          />
+          <Route path="/report/complete"
+            element={<ProtectedRoute><ReportSuccess /></ProtectedRoute>}
+          />
+          <Route path="/dashboard"
+            element={<ProtectedRoute><MyDashboard /></ProtectedRoute>}
+          />
 
-        {/* Citizen-protected pages */}
-        <Route
-          path="/report"
-          element={<ProtectedRoute><ReportIssue /></ProtectedRoute>}
-        />
-        <Route
-          path="/dashboard"
-          element={<ProtectedRoute><Dashboard /></ProtectedRoute>}
-        />
+          {/* 404 */}
+          <Route path="*" element={<NotFound />} />
+        </Route>
 
-        {/* Admin-only page */}
-        <Route
-          path="/admin"
-          element={<AdminRoute><AdminPanel /></AdminRoute>}
-        />
-
-        {/* Catch-all */}
-        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

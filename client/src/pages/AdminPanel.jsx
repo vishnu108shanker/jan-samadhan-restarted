@@ -1,224 +1,297 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/axios';
-import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import {
+  MapPin, Droplet, Trash2, Zap, Heart, GraduationCap,
+  FileCheck, ChevronDown, Loader2, CheckCircle2, AlertTriangle,
+  Clock, UserCheck, ShieldCheck, Filter, Search
+} from 'lucide-react';
 
-const STATUSES = ['Submitted', 'Assigned', 'In Progress', 'Resolved'];
+const DEPT_ICONS = {
+  Roads: MapPin, Water: Droplet, Sanitation: Trash2,
+  Electricity: Zap, Health: Heart, Education: GraduationCap,
+};
 
-const STATUS_BADGE = {
-  'Submitted':   'bg-blue-100 text-blue-700 border-blue-200',
-  'Assigned':    'bg-yellow-100 text-yellow-700 border-yellow-200',
-  'In Progress': 'bg-orange-100 text-orange-700 border-orange-200',
-  'Resolved':    'bg-green-100 text-green-700 border-green-200',
+const STATUS_OPTIONS = ['Submitted', 'Assigned', 'In Progress', 'Resolved'];
+
+const STATUS_CONFIG = {
+  Submitted:    { bg: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300',       dot: 'bg-slate-400',   icon: FileCheck  },
+  Assigned:     { bg: 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300', dot: 'bg-indigo-500',  icon: UserCheck  },
+  'In Progress':{ bg: 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300',     dot: 'bg-amber-500',   icon: Clock      },
+  Resolved:     { bg: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300', dot: 'bg-emerald-500', icon: ShieldCheck },
 };
 
 export default function AdminPanel() {
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { showToast } = useToast();
 
-  const [issues, setIssues]           = useState([]);
-  const [loading, setLoading]         = useState(true);
-  const [error, setError]             = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
-  const [filterDept, setFilterDept]   = useState('');
-  const [updating, setUpdating]       = useState(null); // issue id being updated
-
-  // Inline edit state per issue
-  const [edits, setEdits] = useState({}); // { [id]: { status, officerNotes } }
-
-  const fetchIssues = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await api.get('/issues/all');
-      setIssues(res.data.issues);
-    } catch (err) {
-      if (err.response?.status === 403 || err.response?.status === 401) {
-        setError('Access denied. Admin privileges required.');
-      } else {
-        setError('Failed to load issues. Please refresh.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [issues,     setIssues]     = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [filterDept, setFilterDept] = useState('');
+  const [filterStat, setFilterStat] = useState('');
+  const [searchQ,    setSearchQ]    = useState('');
+  const [edits,      setEdits]      = useState({});       // { [id]: { status, notes } }
+  const [saving,     setSaving]     = useState({});       // { [id]: bool }
+  const [successMsg, setSuccessMsg] = useState({});       // { [id]: string }
 
   useEffect(() => {
-    if (!user) { navigate('/login'); return; }
-    if (user.role !== 'admin') { navigate('/report'); return; }
-    fetchIssues();
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+    api.get('/issues/all')
+      .then(res => setIssues(res.data.issues || []))
+      .catch(() => showToast('Failed to load reports.', 'error'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const departments = [...new Set(issues.map(i => i.department))].sort();
+
+  const filtered = issues.filter(i => {
+    const matchDept = !filterDept || i.department === filterDept;
+    const matchStat = !filterStat || i.status === filterStat;
+    const matchQ    = !searchQ    ||
+      i.token?.toLowerCase().includes(searchQ.toLowerCase()) ||
+      i.description?.toLowerCase().includes(searchQ.toLowerCase()) ||
+      i.location?.toLowerCase().includes(searchQ.toLowerCase());
+    return matchDept && matchStat && matchQ;
+  });
+
+  const getEdit = (issue) => edits[issue._id] || { status: issue.status, notes: issue.officerNotes || '' };
 
   const handleEditChange = (id, field, value) => {
-    setEdits((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
+    setEdits(prev => ({ ...prev, [id]: { ...getEdit({ _id: id }), [field]: value } }));
   };
 
-  const handleUpdate = async (issue) => {
-    const patch = edits[issue._id];
-    if (!patch || (!patch.status && patch.officerNotes === undefined)) return;
-
-    setUpdating(issue._id);
+  const handleSave = async (issue) => {
+    const edit = getEdit(issue);
+    setSaving(prev => ({ ...prev, [issue._id]: true }));
+    setSuccessMsg(prev => ({ ...prev, [issue._id]: '' }));
     try {
-      const payload = {};
-      if (patch.status) payload.status = patch.status;
-      if (patch.officerNotes !== undefined) payload.officerNotes = patch.officerNotes;
-
-      const res = await api.patch(`/issues/${issue._id}/status`, payload);
-      setIssues((prev) => prev.map((i) => (i._id === issue._id ? res.data.issue : i)));
-      setEdits((prev) => { const copy = { ...prev }; delete copy[issue._id]; return copy; });
-    } catch (err) {
-      alert(err.response?.data?.error || 'Update failed. Please try again.');
+      const res = await api.patch(`/issues/${issue._id}/status`, {
+        status: edit.status,
+        officerNotes: edit.notes,
+      });
+      setIssues(prev => prev.map(i => i._id === issue._id ? res.data.issue : i));
+      setEdits(prev => { const copy = { ...prev }; delete copy[issue._id]; return copy; });
+      setSuccessMsg(prev => ({ ...prev, [issue._id]: 'Updated successfully.' }));
+      showToast('Report status updated.', 'success');
+      setTimeout(() => setSuccessMsg(prev => ({ ...prev, [issue._id]: '' })), 3000);
+    } catch {
+      showToast('Failed to update status. Try again.', 'error');
     } finally {
-      setUpdating(null);
+      setSaving(prev => ({ ...prev, [issue._id]: false }));
     }
   };
 
-  const departments = [...new Set(issues.map((i) => i.department))].sort();
-
-  const filtered = issues.filter((i) => {
-    const matchStatus = filterStatus ? i.status === filterStatus : true;
-    const matchDept   = filterDept   ? i.department === filterDept : true;
-    return matchStatus && matchDept;
-  });
-
-  const stats = STATUSES.map((s) => ({ label: s, count: issues.filter((i) => i.status === s).length }));
+  const isDirty = (issue) => {
+    const e = edits[issue._id];
+    if (!e) return false;
+    return e.status !== issue.status || e.notes !== (issue.officerNotes || '');
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
-      <nav className="bg-white border-b border-gray-200 shadow-sm px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-orange-500 rounded-xl flex items-center justify-center">
-            <span className="text-white font-bold text-sm">J</span>
-          </div>
-          <div>
-            <span className="font-bold text-gray-800">Jan Samadhan</span>
-            <span className="ml-2 text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">Admin</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link to="/scores" className="text-sm text-gray-500 hover:text-orange-500 transition">Public Scores</Link>
-          <Link to="/track" className="text-sm text-gray-500 hover:text-orange-500 transition">Public Tracker</Link>
-          <button onClick={() => { logout(); navigate('/login'); }} className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg transition">Logout</button>
-        </div>
-      </nav>
+    <div className="space-y-6">
 
-      <div className="max-w-6xl mx-auto px-4 py-10">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-800">Admin Panel</h1>
-          <p className="text-gray-500 mt-1 text-sm">Manage all citizen grievances and update their resolution status.</p>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold font-display text-slate-900 dark:text-slate-100 tracking-tight">
+            Institutional Operations Dashboard
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Review live report files, assign investigators, and record resolution statements.
+          </p>
         </div>
-
-        {/* Stats */}
-        {!loading && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-            {stats.map(({ label, count }) => (
-              <div key={label} className="bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-4 text-center cursor-pointer hover:border-orange-300 transition" onClick={() => setFilterStatus(filterStatus === label ? '' : label)}>
-                <p className="text-3xl font-bold text-gray-800">{count}</p>
-                <p className={`text-xs font-semibold mt-1 px-2 py-0.5 rounded-full inline-block border ${STATUS_BADGE[label] || 'bg-gray-100 text-gray-500 border-gray-200'}`}>{label}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Filters */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 mb-6 flex flex-wrap gap-4 items-center">
-          <span className="text-sm font-medium text-gray-500">Filter by:</span>
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="text-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white text-gray-700">
-            <option value="">All Statuses</option>
-            {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-          <select value={filterDept} onChange={(e) => setFilterDept(e.target.value)} className="text-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white text-gray-700">
-            <option value="">All Departments</option>
-            {departments.map((d) => <option key={d} value={d}>{d}</option>)}
-          </select>
-          {(filterStatus || filterDept) && (
-            <button onClick={() => { setFilterStatus(''); setFilterDept(''); }} className="text-xs text-orange-500 hover:underline font-medium">Clear Filters</button>
+        <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-600">
+          <span className="font-mono font-bold text-slate-600 dark:text-slate-400">{issues.length}</span> total reports
+          {filtered.length !== issues.length && (
+            <span>· <span className="font-mono font-bold text-sky-500">{filtered.length}</span> filtered</span>
           )}
-          <span className="ml-auto text-xs text-gray-400">{filtered.length} of {issues.length} issues</span>
-          <button onClick={fetchIssues} className="text-xs text-gray-500 hover:text-orange-500 border border-gray-200 px-3 py-1.5 rounded-lg transition">↻ Refresh</button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-wrap gap-3 items-center shadow-soft">
+        {/* Search */}
+        <div className="relative flex-grow min-w-[180px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+          <input
+            type="text"
+            value={searchQ}
+            onChange={e => setSearchQ(e.target.value)}
+            placeholder="Search token, description, location..."
+            className="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 text-xs placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-sky-500 dark:focus:border-sky-500 transition-all font-mono"
+          />
         </div>
 
-        {/* Content */}
-        {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <svg className="animate-spin h-8 w-8 text-orange-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-            </svg>
-          </div>
-        ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center text-red-600">{error}</div>
-        ) : filtered.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center text-gray-400">
-            No issues match the current filters.
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filtered.map((issue) => {
-              const edit = edits[issue._id] || {};
-              const currentStatus = edit.status || issue.status;
-              const currentNotes  = edit.officerNotes !== undefined ? edit.officerNotes : (issue.officerNotes || '');
-              const isDirty = edit.status || edit.officerNotes !== undefined;
+        {/* Category filter */}
+        <div className="relative">
+          <select
+            value={filterDept}
+            onChange={e => setFilterDept(e.target.value)}
+            className="text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded-lg focus:outline-none focus:border-sky-500 dark:focus:border-sky-500 appearance-none pr-7 transition-all cursor-pointer"
+          >
+            <option value="">All Categories</option>
+            {departments.map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+        </div>
 
-              return (
-                <div key={issue._id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                  {/* Issue header */}
-                  <div className="px-6 py-4 flex flex-wrap items-start gap-4 border-b border-gray-50">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <span className="text-xs font-semibold bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{issue.department}</span>
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${STATUS_BADGE[issue.status] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>{issue.status}</span>
-                        <span className="text-xs text-gray-400 font-mono">#{issue.token}</span>
-                      </div>
-                      <p className="text-gray-700 text-sm leading-relaxed">{issue.description}</p>
-                      <div className="flex flex-wrap gap-4 mt-2 text-xs text-gray-400">
-                        <span>📍 {issue.location}</span>
-                        <span>🗓 {new Date(issue.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                        {issue.resolvedAt && <span className="text-green-600">✅ Resolved {new Date(issue.resolvedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>}
-                      </div>
-                    </div>
-                  </div>
+        {/* Status filter */}
+        <div className="relative">
+          <select
+            value={filterStat}
+            onChange={e => setFilterStat(e.target.value)}
+            className="text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded-lg focus:outline-none focus:border-sky-500 dark:focus:border-sky-500 appearance-none pr-7 transition-all cursor-pointer"
+          >
+            <option value="">All Statuses</option>
+            {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+        </div>
 
-                  {/* Admin action row */}
-                  <div className="px-6 py-4 bg-gray-50 flex flex-wrap gap-4 items-end">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Update Status</label>
-                      <select
-                        value={currentStatus}
-                        onChange={(e) => handleEditChange(issue._id, 'status', e.target.value)}
-                        className="text-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white text-gray-700"
-                      >
-                        {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </div>
-                    <div className="flex-1 min-w-48">
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Officer Notes</label>
-                      <input
-                        type="text"
-                        value={currentNotes}
-                        onChange={(e) => handleEditChange(issue._id, 'officerNotes', e.target.value)}
-                        placeholder="Add resolution notes..."
-                        className="w-full text-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white text-gray-700 placeholder-gray-400"
-                      />
-                    </div>
-                    <button
-                      onClick={() => handleUpdate(issue)}
-                      disabled={!isDirty || updating === issue._id}
-                      className={`px-4 py-2 text-sm font-semibold rounded-lg transition flex items-center gap-2 ${isDirty ? 'bg-orange-500 hover:bg-orange-600 text-white shadow' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
-                    >
-                      {updating === issue._id ? (
-                        <><svg className="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" /></svg>Saving...</>
-                      ) : 'Save Changes'}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        {(filterDept || filterStat || searchQ) && (
+          <button
+            onClick={() => { setFilterDept(''); setFilterStat(''); setSearchQ(''); }}
+            className="text-xs text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 font-medium transition-colors px-2 py-2"
+          >
+            Clear
+          </button>
         )}
       </div>
+
+      {/* Report Cards */}
+      {loading ? (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-16 flex flex-col items-center gap-3 shadow-soft">
+          <Loader2 className="w-8 h-8 text-sky-500 animate-spin" />
+          <p className="text-sm text-slate-400 font-medium">Loading report files...</p>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-16 text-center shadow-soft">
+          <Filter className="w-8 h-8 text-slate-300 dark:text-slate-700 mx-auto mb-3" />
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+            {issues.length === 0 ? 'No reports in the system yet.' : 'No reports match your current filters.'}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filtered.map(issue => {
+            const Icon        = DEPT_ICONS[issue.department] || FileCheck;
+            const statusCfg   = STATUS_CONFIG[issue.status] || STATUS_CONFIG.Submitted;
+            const StatusIcon  = statusCfg.icon;
+            const edit        = getEdit(issue);
+            const dirty       = isDirty(issue);
+            const isSaving    = saving[issue._id];
+            const successTxt  = successMsg[issue._id];
+
+            return (
+              <div
+                key={issue._id}
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-soft hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
+              >
+                {/* Top info row */}
+                <div className="p-5 sm:p-6 flex flex-col md:flex-row gap-5 justify-between items-start">
+                  <div className="space-y-2.5 flex-grow min-w-0">
+
+                    {/* Token + status */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-200 tracking-widest bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md">
+                        #{issue.token}
+                      </span>
+                      <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-md ${statusCfg.bg}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
+                        {issue.status}
+                      </span>
+                    </div>
+
+                    {/* Category + date */}
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                      <span className="flex items-center gap-1.5">
+                        <Icon className="w-3.5 h-3.5 text-slate-400" /> {issue.department}
+                      </span>
+                      <span className="text-slate-300 dark:text-slate-700">·</span>
+                      <span className="flex items-center gap-1">
+                        {new Date(issue.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </span>
+                      {issue.location && (
+                        <>
+                          <span className="text-slate-300 dark:text-slate-700">·</span>
+                          <span className="flex items-center gap-1 max-w-[220px] truncate">
+                            <MapPin className="w-3 h-3 flex-shrink-0" /> {issue.location}
+                          </span>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Description */}
+                    {issue.description && (
+                      <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2 max-w-xl">
+                        {issue.description}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Photo thumbnail */}
+                  {issue.photoUrl && (
+                    <div className="w-20 h-14 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 flex-shrink-0">
+                      <a href={issue.photoUrl} target="_blank" rel="noopener noreferrer">
+                        <img
+                          src={issue.photoUrl}
+                          alt="Incident Evidence"
+                          className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+                          onError={e => { e.target.onerror = null; e.target.parentNode.innerHTML = '<div class="w-full h-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] text-slate-400">No image</div>'; }}
+                        />
+                      </a>
+                    </div>
+                  )}
+                </div>
+
+                {/* Admin action row */}
+                <div className="border-t border-slate-100 dark:border-slate-800 px-5 sm:px-6 py-4 bg-slate-50/60 dark:bg-slate-800/20 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+
+                  {/* Status selector */}
+                  <div className="relative">
+                    <select
+                      value={edit.status}
+                      onChange={e => handleEditChange(issue._id, 'status', e.target.value)}
+                      className="text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-3 py-2 rounded-lg focus:outline-none focus:border-sky-500 dark:focus:border-sky-500 appearance-none pr-7 transition-all cursor-pointer"
+                    >
+                      {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+                  </div>
+
+                  {/* Notes input */}
+                  <input
+                    type="text"
+                    value={edit.notes}
+                    onChange={e => handleEditChange(issue._id, 'notes', e.target.value)}
+                    placeholder="Investigator remarks / resolution notes..."
+                    className="flex-grow text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 px-3 py-2 rounded-lg focus:outline-none focus:border-sky-500 dark:focus:border-sky-500 transition-all"
+                  />
+
+                  {/* Save button */}
+                  <button
+                    onClick={() => handleSave(issue)}
+                    disabled={!dirty || isSaving}
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+                      dirty
+                        ? 'bg-sky-500 hover:bg-sky-600 text-white shadow-sm'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed'
+                    }`}
+                  >
+                    {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                    Save
+                  </button>
+
+                  {/* Success confirmation */}
+                  {successTxt && (
+                    <span className="text-xs text-emerald-500 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> {successTxt}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

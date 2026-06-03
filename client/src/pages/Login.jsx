@@ -1,174 +1,147 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import Logo from '../components/Logo';
+import { AlertCircle, Lock, Mail, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/dashboard';
 
-  const [form, setForm] = useState({ email: '', password: '' });
-  const [error, setError] = useState('');
+  const [form, setForm]       = useState({ email: '', password: '' });
+  const [error, setError]     = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
-      const response = await api.post('/auth/login', form);
-       // Fix made to make it more robust - if token is missing or login fails, it will throw an error and show the error message instead of navigating to the report page without a token which would cause issues in subsequent API calls that require authentication
-      // login(response.data.token); // stores token + decodes user into context
-
-      const { token } = response.data;
-      if (!token) throw new Error("Token missing");
-      // login(token);
-
-      // Optional upgrade (not required, but sharp)
-      // Persist login:
-
-// yaad kar ye login fuxn saala useAuth() se import hua hai , iska code udhar hai 
+      const res = await api.post('/auth/login', form);
+      const { token } = res.data;
+      if (!token) throw new Error('Auth token missing');
       login(token);
-      localStorage.setItem("token", token);
-      // And restore on app load.
-       
-      navigate('/report');
+      localStorage.setItem('token', token);
+      navigate(redirect);
     } catch (err) {
-      // setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
-      // Fix made to provide more specific error messages based on the type of error (network, server, validation, etc.) instead of a generic message for all errors. This will help users understand what went wrong and how to fix it (e.g., check credentials vs. try again later).
       if (err.response) {
-        // Server responded with a status code (4xx, 5xx)
-        const status = err.response.status;
-
-        if (status === 400) {
-          setError("Invalid input. Please check email and password format.");
-        } else if (status === 401) {
-          setError("Incorrect email or password.");
-        } else if (status === 403) {
-          setError("Access denied. You are not authorized.");
-        } else if (status === 500) {
-          setError("Server error. Please try again later.");
-        } else {
-          setError(err.response.data?.error || "Unexpected server response.");
-        }
-
-      } else if (err.request) {
-        // Request made but no response (network issue)
-        setError("No response from server. Check your internet connection.");
+        const s = err.response.status;
+        if (s === 400) setError('Please verify your email and password format.');
+        else if (s === 401) setError('Incorrect email or password.');
+        else setError(err.response.data?.error || 'Authentication failed. Try again.');
       } else {
-        // Something else happened
-        setError("Something went wrong. Please try again.");
+        setError('Network error. Could not connect to server.');
       }
-
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 bg-slate-50 dark:bg-[#0A0F1E]">
+      <div className="w-full max-w-sm">
 
-        {/* Header */}
+        {/* Logo + title */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-500 rounded-2xl shadow-lg mb-4">
-            <span className="text-white text-2xl font-bold">J</span>
+          <div className="flex justify-center mb-4">
+            <Logo iconOnly />
           </div>
-          <h1 className="text-3xl font-bold text-gray-800">Jan Samadhan</h1>
-          <p className="text-gray-500 mt-1">Sign in to your citizen account</p>
+          <h1 className="text-2xl font-bold font-display text-slate-900 dark:text-slate-100 tracking-tight">
+            Sign in to Whistleblower
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5">
+            Access your secure dashboard to file and track reports.
+          </p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-          <h2 className="text-xl font-semibold text-gray-700 mb-6">Login</h2>
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-card p-7">
 
-          {/* Error banner */}
           {error && (
-            <div className="mb-5 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+            <div className="mb-5 p-3.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-2.5 text-red-600 dark:text-red-400 text-xs font-medium">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-1">
+              <label htmlFor="email" className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
                 Email Address
               </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                value={form.email}
-                onChange={handleChange}
-                placeholder="ramesh@email.com"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition text-gray-800 placeholder-gray-400"
-              />
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  id="email" name="email" type="email" required
+                  value={form.email} onChange={handleChange}
+                  placeholder="name@organisation.com"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-600 text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-500 focus:ring-2 focus:ring-sky-500/10 transition-all"
+                />
+              </div>
             </div>
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-600 mb-1">
+              <label htmlFor="password" className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
                 Password
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                value={form.password}
-                onChange={handleChange}
-                placeholder="Your password"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition text-gray-800 placeholder-gray-400"
-              />
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  id="password" name="password" type={showPwd ? 'text' : 'password'} required
+                  value={form.password} onChange={handleChange}
+                  placeholder="Enter your password"
+                  className="w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-600 text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-500 focus:ring-2 focus:ring-sky-500/10 transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPwd(!showPwd)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                >
+                  {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-3 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold rounded-lg shadow-md transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full mt-2 flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 disabled:bg-sky-500/50 text-white font-semibold py-2.5 rounded-lg text-sm transition-colors shadow-sm"
             >
               {loading ? (
-                <>
-                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                  </svg>
-                  Signing in...
-                </>
+                <><Loader2 className="w-4 h-4 animate-spin" /> Verifying...</>
               ) : (
-                'Login'
+                <>Sign In <ArrowRight className="w-4 h-4" /></>
               )}
             </button>
           </form>
 
-          {/* Register link */}
-          <p className="text-center text-sm text-gray-500 mt-6">
-            Don&apos;t have an account?{' '}
-            <Link to="/register" className="text-orange-500 font-medium hover:underline">
-              Register here
-            </Link>
-          </p>
-          <p className="text-center text-sm text-gray-500 mt-3">
-            Want to see how departments are performing?{' '}
-            <Link to="/scores" className="text-orange-500 font-medium hover:underline">
-              View public credibility scores
-            </Link>
-          </p>
+          {/* Links */}
+          <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 text-center space-y-2 text-xs">
+            <p className="text-slate-500 dark:text-slate-400">
+              New to Whistleblower?{' '}
+              <Link
+                to={searchParams.get('redirect') ? `/register?redirect=${encodeURIComponent(redirect)}` : '/register'}
+                className="text-sky-500 hover:text-sky-600 dark:hover:text-sky-400 font-semibold"
+              >
+                Create an account
+              </Link>
+            </p>
+            <p>
+              <Link to="/scores" className="text-slate-400 dark:text-slate-600 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+                View public credibility index
+              </Link>
+            </p>
+          </div>
         </div>
-
-        {/* Footer note */}
-        <p className="text-center text-xs text-gray-400 mt-6">
-          Govt. of India · Jan Samadhan Grievance Portal
-        </p>
       </div>
     </div>
   );
