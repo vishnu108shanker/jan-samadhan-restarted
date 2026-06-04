@@ -89,28 +89,57 @@ export default function ReportIssue() {
     );
   };
 
-  const simulateUpload = file => {
+  const uploadToCloudinary = async (file) => {
+    const cloudName    = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+    if (!cloudName || cloudName === 'YOUR_CLOUD_NAME') {
+      showToast('Cloudinary is not configured. Add VITE_CLOUDINARY_CLOUD_NAME to your .env file.', 'error');
+      return;
+    }
+
     setUploadingFile(true);
     setFileName(file.name);
-    setFilePreview(URL.createObjectURL(file));
-    setTimeout(() => {
+    setFilePreview(URL.createObjectURL(file));   // instant local preview
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', uploadPreset);
+      formData.append('folder', 'whistleblower');
+
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        { method: 'POST', body: formData }
+      );
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err?.error?.message || 'Upload failed.');
+      }
+
+      const data = await res.json();
+      setForm(f => ({ ...f, photoUrl: data.secure_url }));
+      showToast('Evidence image uploaded successfully.', 'success');
+    } catch (err) {
+      setFilePreview(null);
+      setFileName('');
+      showToast(`Upload failed: ${err.message}`, 'error');
+    } finally {
       setUploadingFile(false);
-      const mockUrl = `https://res.cloudinary.com/whistleblower/image/upload/mock_${Date.now()}_${encodeURIComponent(file.name)}`;
-      setForm(f => ({ ...f, photoUrl: mockUrl }));
-      showToast('Evidence image attached successfully.', 'success');
-    }, 1800);
+    }
   };
 
   const handleFileChange = e => {
     const file = e.target.files?.[0];
-    if (file) simulateUpload(file);
+    if (file) uploadToCloudinary(file);
   };
 
   const handleDragOver  = e => e.preventDefault();
   const handleDrop      = e => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
-    if (file) simulateUpload(file);
+    if (file) uploadToCloudinary(file);
   };
 
   const validate = () => {
