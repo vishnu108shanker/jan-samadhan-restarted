@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: whistleblower-backend
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: node server/app.js
+    repo: https://github.com/vishnu108shanker/whistleblower-restarted
+    plan: free
+    # Set environment variables in Render dashboard matching .env
+    # Example:
+    # MONGODB_URI: <your-mongo-uri>
+    # JWT_SECRET: <your-secret>
+    # PORT: 10000

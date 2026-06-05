@@ -1,6 +1,6 @@
-# Jan Samadhan - Current Web App Structure & User Flow
+# Whistleblower - Current Web App Structure & User Flow
 
-This document outlines the current state of the Jan Samadhan web application, specifically detailing the application structure, the complete user journey, and proposed recommendations for the next phase of development.
+This document outlines the current state of the Whistleblower web application, specifically detailing the application structure, the complete user journey, and proposed recommendations for the next phase of development.
 
 ---
 

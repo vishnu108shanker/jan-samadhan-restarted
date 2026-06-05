@@ -1,4 +1,4 @@
-# 🏛️ Jan Samadhan Portal
+# 🏛️ Whistleblower Portal
 
 > **A Full-Stack Civic Accountability Platform — Built with the MERN Stack**
 >
@@ -27,11 +27,11 @@
 
 ## 🤔 What is this project?
 
-Jan Samadhan (meaning "People's Resolution") is a **civic grievance and accountability platform** for Indian citizens.
+Whistleblower (meaning "People's Resolution") is a **civic grievance and accountability platform** for Indian citizens.
 
 The problem it solves: If a drain is blocked, a road has a pothole, or a streetlight has been broken for months — right now, there is **nowhere to go**. Existing government portals accept complaints and then go silent. Citizens have no way to know if their complaint was seen, assigned, or simply ignored.
 
-Jan Samadhan fixes this with **three things**:
+Whistleblower fixes this with **three things**:
 
 1. **Report** — Citizens file issues with a photo, location, and description. They get a unique tracking token.
 2. **Track** — Citizens use that token to follow their complaint through a live status timeline.
@@ -382,7 +382,7 @@ Create a `.env` file in the `server/` folder. **Never commit this file to GitHub
 
 ```env
 # Database
-MONGODB_URI=mongodb+srv://your-username:your-password@cluster0.mongodb.net/jansamadhan
+MONGODB_URI=mongodb+srv://your-username:your-password@cluster0.mongodb.net/whistleblower
 
 # Authentication
 JWT_SECRET=pick_a_long_random_string_here_minimum_32_characters
