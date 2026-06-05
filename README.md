@@ -1,4 +1,4 @@
-# 🏛️ Whistleblower Portal
+# 🏛️ Whistleblower
 
 > **A Full-Stack Civic Accountability Platform — Built with the MERN Stack**
 >
@@ -128,7 +128,7 @@ This is a **decoupled MERN application**. The frontend and backend are completel
 ## 📂 Full Folder Structure
 
 ```
-jan-samadhan/
+whistleblower/
 │
 ├── client/                          # React Application (Vite)
 │   ├── public/
