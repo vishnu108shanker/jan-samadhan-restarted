@@ -38,10 +38,9 @@ export default function TrackStatus() {
 
   const fetchIssue = async (t) => {
     if (!t?.trim()) { setError('Please enter a Report ID.'); return; }
-    const cleanToken = t.trim().replace(/^#/, '');
     setError(''); setIssue(null); setLoading(true);
     try {
-      const res = await api.get(`/issues/${cleanToken}`);
+      const res = await api.get(`/issues/${t.trim()}`);
       if (res.data.success) setIssue(res.data.issue);
     } catch (err) {
       if (err.response?.status === 404)
@@ -52,10 +51,7 @@ export default function TrackStatus() {
 
   const handleSearch = e => {
     e.preventDefault();
-    if (token.trim()) {
-      const cleanToken = token.trim().replace(/^#/, '');
-      navigate(`/track?token=${encodeURIComponent(cleanToken)}`);
-    }
+    if (token.trim()) navigate(`/track?token=${encodeURIComponent(token.trim())}`);
   };
 
   const currentStep = issue ? STATUS_STEPS.indexOf(issue.status) : -1;
