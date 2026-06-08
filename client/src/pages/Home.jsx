@@ -23,9 +23,9 @@ const CAPABILITIES = [
     desc: 'All submissions are encrypted in transit and at rest. Your data never leaves without authorization.',
   },
   {
-    icon: Eye,
-    title: 'Anonymous by Default',
-    desc: 'Reporters are never identified unless they explicitly choose to disclose their identity.',
+    icon: Lock,
+    title: 'Strictly Confidential',
+    desc: 'Reporters are strictly confidential. Your identity is protected and only disclosed if you explicitly choose to do so.',
   },
   {
     icon: Activity,
@@ -79,7 +79,7 @@ export default function Home() {
           {/* Headline */}
           <h1 className="text-4xl sm:text-5xl md:text-[56px] font-extrabold font-display text-slate-900 dark:text-slate-50 tracking-tight leading-[1.1] mb-5">
             Secure.{' '}
-            <span className="text-sky-500">Anonymous.</span>
+            <span className="text-sky-500">Confidential.</span>
             {' '}Accountable.
           </h1>
 
@@ -101,7 +101,7 @@ export default function Home() {
                   type="text"
                   value={token}
                   onChange={e => setToken(e.target.value)}
-                  placeholder="Enter Report ID  (e.g. WB-2024-XXXXXX)"
+                  placeholder="Enter Report ID  (e.g. WB-2026-XXXXXX)"
                   className="w-full pl-10 pr-4 py-2.5 bg-transparent text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none text-sm font-mono"
                 />
               </div>
@@ -118,7 +118,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               to={user ? '/report' : '/login?redirect=/report'}
-              className="inline-flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-semibold px-7 py-3 rounded-lg text-sm transition-colors shadow-sm w-full sm:w-auto justify-center"
+              className="inline-flex items-center gap-2 border-2 border-sky-500 text-sky-600 hover:bg-sky-50 dark:text-sky-400 dark:hover:bg-sky-500/10 font-semibold px-7 py-2.5 rounded-lg text-sm transition-colors w-full sm:w-auto justify-center"
             >
               <FilePlus className="w-4 h-4" />
               Submit a Complaint
@@ -145,8 +145,11 @@ export default function Home() {
               <div className="w-9 h-9 rounded-lg bg-sky-500/10 dark:bg-sky-500/10 flex items-center justify-center">
                 <Icon className="w-4.5 h-4.5 text-sky-500" />
               </div>
-              <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">{title}</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{desc}</p>
+              <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-1.5">
+                {title === '256-Bit Encrypted' && <Lock className="w-3.5 h-3.5 text-sky-500" />}
+                {title}
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{desc}</p>
             </div>
           ))}
         </div>
@@ -159,13 +162,16 @@ export default function Home() {
             <h2 className="text-2xl font-bold font-display text-slate-900 dark:text-slate-100">
               Supported Complaint Categories
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5">
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1.5">
               Credibility scores are calculated automatically from actual resolution data.
               Displayed only when data exists.
             </p>
+            <p className="text-xs text-slate-500 dark:text-slate-500 mt-1 italic">
+              * Scores reflect institutional resolution rates over the last 90 days.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pt-2">
             {CATEGORIES.map(({ name, icon: Icon, desc }) => {
               const score = scores[name] ?? null;
               return (
@@ -176,7 +182,7 @@ export default function Home() {
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-sky-500/10 transition-colors">
-                      <Icon className="w-4.5 h-4.5 text-slate-500 dark:text-slate-400 group-hover:text-sky-500 transition-colors" />
+                      <Icon className="w-4.5 h-4.5 text-slate-600 dark:text-slate-400 group-hover:text-sky-500 transition-colors" />
                     </div>
                     {score !== null ? (
                       <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
@@ -191,9 +197,9 @@ export default function Home() {
                     ) : null}
                   </div>
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">{name}</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{desc}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{desc}</p>
                   {score !== null && (
-                    <div className="mt-3 w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div className="mt-3 w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all duration-500 ${
                           score >= 75 ? 'bg-emerald-500' : score >= 45 ? 'bg-amber-500' : 'bg-red-500'

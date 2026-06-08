@@ -17,7 +17,7 @@ const STATUS_DETAILS = {
 };
 
 const STATUS_BADGE = {
-  Submitted:    'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300',
+  Submitted:    'bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300',
   Assigned:     'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300',
   'In Progress':'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300',
   Resolved:     'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300',
@@ -38,9 +38,10 @@ export default function TrackStatus() {
 
   const fetchIssue = async (t) => {
     if (!t?.trim()) { setError('Please enter a Report ID.'); return; }
+    const cleanToken = t.trim().replace(/^#/, '');
     setError(''); setIssue(null); setLoading(true);
     try {
-      const res = await api.get(`/issues/${t.trim()}`);
+      const res = await api.get(`/issues/${cleanToken}`);
       if (res.data.success) setIssue(res.data.issue);
     } catch (err) {
       if (err.response?.status === 404)
@@ -51,7 +52,10 @@ export default function TrackStatus() {
 
   const handleSearch = e => {
     e.preventDefault();
-    if (token.trim()) navigate(`/track?token=${encodeURIComponent(token.trim())}`);
+    if (token.trim()) {
+      const cleanToken = token.trim().replace(/^#/, '');
+      navigate(`/track?token=${encodeURIComponent(cleanToken)}`);
+    }
   };
 
   const currentStep = issue ? STATUS_STEPS.indexOf(issue.status) : -1;
@@ -182,6 +186,27 @@ export default function TrackStatus() {
                   </div>
                 </div>
               )}
+
+              {/* Investigator Notes */}
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-soft">
+                <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">
+                  Investigator Remarks
+                </h3>
+                {issue.officerNotes ? (
+                  <div className="border-l-2 border-sky-500 pl-4 py-1">
+                    <p className="text-[10px] font-bold text-sky-500 uppercase tracking-wider mb-1.5">
+                      Assigned Investigator Statement
+                    </p>
+                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                      "{issue.officerNotes}"
+                    </p>
+                  </div>
+                ) : (
+                  <div className="p-5 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 text-center text-xs text-slate-400 dark:text-slate-500">
+                    No investigator remarks have been added yet. Notes will appear here once the investigation begins.
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Right — Timeline + Notes */}
@@ -215,7 +240,7 @@ export default function TrackStatus() {
                         {/* Content */}
                         <div>
                           <div className="flex items-center gap-2 mb-0.5">
-                            <h4 className={`text-sm font-semibold font-display ${isActive ? 'text-slate-900 dark:text-slate-100' : 'text-slate-300 dark:text-slate-600'}`}>
+                            <h4 className={`text-sm font-semibold font-display ${isActive ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-400'}`}>
                               {detail.title}
                             </h4>
                             {isCurrent && (
@@ -234,26 +259,6 @@ export default function TrackStatus() {
                 </div>
               </div>
 
-              {/* Investigator Notes */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-soft">
-                <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">
-                  Investigator Remarks
-                </h3>
-                {issue.officerNotes ? (
-                  <div className="border-l-2 border-sky-500 pl-4 py-1">
-                    <p className="text-[10px] font-bold text-sky-500 uppercase tracking-wider mb-1.5">
-                      Assigned Investigator Statement
-                    </p>
-                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                      "{issue.officerNotes}"
-                    </p>
-                  </div>
-                ) : (
-                  <div className="p-5 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 text-center text-xs text-slate-400 dark:text-slate-600">
-                    No investigator remarks have been added yet. Notes will appear here once the investigation begins.
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         </div>

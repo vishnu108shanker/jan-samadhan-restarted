@@ -3,7 +3,7 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, ArrowLeft } from 'lucide-react';
+import { LogOut, ArrowLeft, ExternalLink } from 'lucide-react';
 
 /** Public + Citizen layout — standard Navbar and Footer */
 export function CitizenLayout() {
@@ -14,6 +14,18 @@ export function CitizenLayout() {
         <Outlet />
       </main>
       <Footer />
+
+      {/* Sticky Quick Exit Button */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <button
+          onClick={() => window.location.replace('https://google.com')}
+          className="group flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2.5 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200"
+          title="Instantly leave this site"
+        >
+          <ExternalLink className="w-4 h-4" />
+          <span className="hidden sm:inline">Quick Exit</span>
+        </button>
+      </div>
     </div>
   );
 }
@@ -74,8 +86,9 @@ export function AdminLayout({ children }) {
         {children || <Outlet />}
       </main>
 
-      <footer className="bg-[#0A0F1E] border-t border-slate-800 py-4 text-center text-xs text-slate-600">
-        Whistleblower Admin Console &bull; Secured via JWT Authentication
+      <footer className="bg-[#0A0F1E] border-t border-slate-800 py-4 text-center text-xs text-slate-600 space-y-1">
+        <p>Whistleblower Admin Console &bull; Secured via JWT Authentication</p>
+        <p>Powered by <a href="https://github.com/vishnu108shanker/Whistleblower/tree/main" target="_blank" rel="noopener noreferrer" className="text-sky-500 hover:text-sky-400 hover:underline transition-colors">@the_evil_lord</a></p>
       </footer>
     </div>
   );

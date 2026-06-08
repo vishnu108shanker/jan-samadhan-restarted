@@ -14,7 +14,7 @@ export default function Footer() {
           <div className="md:col-span-2 space-y-4">
             <Logo />
             <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
-              A secure, anonymous platform for submitting and tracking institutional complaints.
+              A secure, strictly confidential platform for submitting and tracking institutional complaints.
               All reports are encrypted and handled with full investigator accountability.
             </p>
             <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-600">
@@ -75,8 +75,11 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-slate-100 dark:border-slate-800/70 mt-10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-slate-400 dark:text-slate-600">
           <span>© {year} Whistleblower. All rights reserved.</span>
-          <span className="text-slate-300 dark:text-slate-700">
-            Built for institutional transparency and accountability.
+          <span className="text-slate-400 dark:text-slate-500">
+            Powered by{' '}
+            <a href="https://github.com/vishnu108shanker/Whistleblower/tree/main" target="_blank" rel="noopener noreferrer" className="text-sky-500 hover:text-sky-400 hover:underline transition-colors font-medium">
+              @the_evil_lord
+            </a>
           </span>
         </div>
       </div>
