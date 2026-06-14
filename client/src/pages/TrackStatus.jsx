@@ -180,6 +180,8 @@ export default function TrackStatus() {
                     <img
                       src={issue.photoUrl}
                       alt="Incident Evidence"
+                      width="800"
+                      height="400"
                       className="w-full object-cover max-h-44 hover:scale-105 transition-transform duration-300"
                       onError={e => { e.target.onerror = null; e.target.parentNode.innerHTML = '<div class="p-6 text-center text-xs text-slate-400 bg-slate-50 dark:bg-slate-800">Image unavailable</div>'; }}
                     />

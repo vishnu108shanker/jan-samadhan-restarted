@@ -272,6 +272,7 @@ export default function ReportIssue() {
                 disabled={detectingLoc}
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-sky-500 hover:border-sky-500/40 disabled:opacity-50 transition-all"
                 title="Auto-detect GPS location"
+                aria-label="Auto-detect GPS location"
               >
                 {detectingLoc ? (
                   <Loader2 className="w-4 h-4 animate-spin text-sky-500" />
@@ -322,7 +323,7 @@ export default function ReportIssue() {
               </div>
             ) : filePreview ? (
               <div className="flex flex-col items-center py-1 gap-2">
-                <img src={filePreview} alt="Preview" className="w-28 h-20 object-cover rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm" />
+                <img src={filePreview} alt="Preview" width="112" height="80" className="w-28 h-20 object-cover rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm" />
                 <p className="text-xs text-slate-600 dark:text-slate-400 font-medium truncate max-w-xs">{fileName}</p>
                 <button
                   type="button"

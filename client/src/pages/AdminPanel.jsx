@@ -234,6 +234,8 @@ export default function AdminPanel() {
                         <img
                           src={issue.photoUrl}
                           alt="Incident Evidence"
+                          width="80"
+                          height="56"
                           className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
                           onError={e => { e.target.onerror = null; e.target.parentNode.innerHTML = '<div class="w-full h-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] text-slate-400">No image</div>'; }}
                         />
