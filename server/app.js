@@ -53,6 +53,10 @@ app.use('/api/auth', require('./routes/auth') );
 app.use('/api/issues', require('./routes/issues') );
 app.use('/api/stats', require('./routes/stats') );
 
+// Ping route for keep-awake cron jobs (e.g. Render)
+app.get('/api/ping', (req, res) => {
+    res.status(200).json({ success: true, message: 'Server is awake' });
+});
 
 
 
